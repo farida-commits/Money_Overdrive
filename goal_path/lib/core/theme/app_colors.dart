@@ -4,7 +4,7 @@ class AppColors {
   AppColors._();
 
   // Фон
-  static const Color background = Color(0xFF13181E);
+  static const Color background = Color(0xFF1E2227);
   static const Color surface = Color(0xFFFFFFFF);
 
   // Акценты

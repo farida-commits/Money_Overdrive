@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:goal_path/features/home/add_item_screen.dart';
 import 'package:lottie/lottie.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_bottom_nav_bar.dart';
@@ -27,8 +29,9 @@ class _HomeScreenState extends State<HomeScreen> {
           'My purchases',
           style: TextStyle(
             color: AppColors.textOnDark,
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
+            fontSize: 24,
+            fontWeight: FontWeight.w500,
+            fontFamily: 'SF Pro Display',
           ),
         ),
       ),
@@ -45,30 +48,38 @@ class _HomeScreenState extends State<HomeScreen> {
                       color: const Color(0xFF252B35),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: TextField(
-                      controller: _searchController,
-                      style: TextStyle(color: AppColors.textOnDark),
-                      decoration: InputDecoration(
-                        hintText: 'Search',
-                        hintStyle: const TextStyle(color: AppColors.grey),
-                        prefixIcon: SvgPicture.asset(
-                          'assets/icons/search.svg',
-                          width: 24,
-                          height: 24,
-                          fit: BoxFit.scaleDown,
-                          colorFilter: const ColorFilter.mode(
-                            AppColors.grey,
-                            BlendMode.srcIn,
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 10,
+                        ),
+                        const Icon(
+                          CupertinoIcons.search,
+                          color: AppColors.grey,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8,),
+                        Expanded(
+                          child: TextField(
+                            controller: _searchController,
+                            style: const TextStyle(
+                              color: AppColors.textOnDark,
+                            ),
+                            decoration: const InputDecoration(
+                              hintText: 'Search',
+                              hintStyle: TextStyle(
+                                fontFamily: 'SF Pro Display',
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.grey,
+                              ),
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                            ),
                           ),
                         ),
-                        filled: true,
-                        fillColor: Color(0xFF252B35),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                      ),
+                      ],
                     ),
                   ),
                 ),
@@ -97,13 +108,23 @@ class _HomeScreenState extends State<HomeScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                onPressed: () {},
+                onPressed: () async{
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const AddItemScreen()),
+                  );
+                  if (result != null) {
+                    setState(() => _purchases.add(result));
+                  }
+                },
                 child: const Text(
                   '+ Add item',
                   style: TextStyle(
+                    fontFamily: 'SF Pro Display',
                     color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
@@ -124,7 +145,9 @@ class _HomeScreenState extends State<HomeScreen> {
       width: 40,
       height: 40,
       decoration: BoxDecoration(
-        color: const Color(0xFF252B35),
+        color: _purchases.isEmpty
+        ? const Color(0xFF252B35)
+        : Colors.white.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Padding(
@@ -146,8 +169,8 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         Lottie.asset(
           'assets/animations/empty.json',
-          width: 200,
-          height: 200,
+          width: 220,
+          height: 220,
           repeat: true,
         ),
         const SizedBox(height: 16),
@@ -155,8 +178,9 @@ class _HomeScreenState extends State<HomeScreen> {
           'Your purchases\nwill be displayed here',
           textAlign: TextAlign.center,
           style: TextStyle(
+            fontFamily: 'SF Pro Display',
             color: AppColors.grey,
-            fontSize: 15,
+            fontSize: 20,
             fontWeight: FontWeight.w400,
           ),
         ),
@@ -168,7 +192,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       itemCount: _purchases.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      separatorBuilder: (_,_) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final item = _purchases[index];
         return _buildPurchaseCard(item);

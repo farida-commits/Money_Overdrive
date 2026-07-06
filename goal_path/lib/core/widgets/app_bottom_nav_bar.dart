@@ -15,9 +15,9 @@ class AppBottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 56,
+      height: 60,
       decoration: const BoxDecoration(
-        color: Color(0xFF1A1F27),
+        color: AppColors.background
       ),
       child: Row(
         children: [
@@ -54,9 +54,11 @@ class AppBottomNavBar extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
+                  fontFamily: 'SF Pro Display',
                   color: isActive ? AppColors.textOnDark : AppColors.grey,
-                  fontSize: 11,
-                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  letterSpacing: 12 * 0.02,
                 ),
               ),
             ],

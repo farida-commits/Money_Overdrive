@@ -36,6 +36,8 @@ dependencies:
   cupertino_icons: ^1.0.8
   lottie: ^3.4.0
   flutter_svg: ^2.3.0
+  image_picker: ^1.2.3
+  permission_handler: ^12.0.3
 
 dev_dependencies:
   flutter_test:
@@ -63,7 +65,18 @@ flutter:
   assets:
     - assets/images/
     - assets/animations/
-    - assets/icons/
+    - assets/icons/search2.svg
+    - assets/icons/search.svg 
+    - assets/icons/mdi_camera.svg 
+    - assets/icons/ic_sort.svg 
+    - assets/icons/ic_settings.svg 
+    - assets/icons/ic_goals.svg 
+    - assets/icons/ic_filter.svg 
+    - assets/icons/ic_checklist.svg 
+    - assets/icons/ic_analytics.svg 
+    - assets/icons/calendar.svg 
+    - assets/icons/back.svg
+    - assets/icons/Vector.svg
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

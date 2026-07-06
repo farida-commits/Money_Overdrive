@@ -15,7 +15,7 @@ class GoalPathApp extends StatelessWidget {
     return MaterialApp(
       title: 'Goal Path',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
+      theme: AppTheme.dark,
       home: const _SplashGate(),
     );
   }
