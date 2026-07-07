@@ -41,7 +41,7 @@ class _RateAppDialogState extends State<RateAppDialog> {
               fontFamily: '.SF Pro Text',
               fontWeight: FontWeight.w600,
               fontSize: 17,
-              letterSpacing: -0.41,
+              letterSpacing: 14 * 0.02,
             ),
           ),
         ],
@@ -52,7 +52,7 @@ class _RateAppDialogState extends State<RateAppDialog> {
           const Text(
             'Tap a star to rate. You can also leave a comment',
             style: TextStyle(
-              fontFamily: '.SF Pro Text',
+              fontFamily: 'SF Pro Text',
               fontSize: 13,
               fontWeight: FontWeight.w400,
               letterSpacing: -0.08,
@@ -60,9 +60,9 @@ class _RateAppDialogState extends State<RateAppDialog> {
             ),
           const SizedBox(height: 12),
           Container(
-            height: 0.5,
+            height: 0.9,
             width: double.infinity,
-            color: CupertinoColors.separator,
+            color: Color(0xff3C3C435C),
           ),
           SizedBox(
             height: 12,

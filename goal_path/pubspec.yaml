@@ -65,18 +65,7 @@ flutter:
   assets:
     - assets/images/
     - assets/animations/
-    - assets/icons/search2.svg
-    - assets/icons/search.svg 
-    - assets/icons/mdi_camera.svg 
-    - assets/icons/ic_sort.svg 
-    - assets/icons/ic_settings.svg 
-    - assets/icons/ic_goals.svg 
-    - assets/icons/ic_filter.svg 
-    - assets/icons/ic_checklist.svg 
-    - assets/icons/ic_analytics.svg 
-    - assets/icons/calendar.svg 
-    - assets/icons/back.svg
-    - assets/icons/Vector.svg
+    - assets/icons/
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

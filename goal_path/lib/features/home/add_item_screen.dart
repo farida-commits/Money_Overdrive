@@ -151,7 +151,15 @@ class _AddItemScreenState extends State<AddItemScreen> {
         backgroundColor: AppColors.background,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textOnDark),
+          icon: SvgPicture.asset(
+            'assets/icons/back.svg',
+            width: 24,
+            height: 24,
+            colorFilter: ColorFilter.mode(
+              AppColors.textOnDark, 
+              BlendMode.srcIn,
+            ),
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(

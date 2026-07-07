@@ -4,14 +4,14 @@ import 'app_colors.dart';
 class AppTheme {
   AppTheme._();
 
-  static ThemeData get dark {
+  static ThemeData get light {
     return ThemeData(
       useMaterial3: true,
       fontFamily: 'SF Pro Display',
       scaffoldBackgroundColor: AppColors.background,
-      colorScheme: const ColorScheme.dark(
+      colorScheme: const ColorScheme.light(
         primary: AppColors.primary,
-        surface: AppColors.background,
+        // surface: AppColors.background,
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.background,
