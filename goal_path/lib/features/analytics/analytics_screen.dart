@@ -287,10 +287,20 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           ),
           borderData: FlBorderData(show: false),
           titlesData: FlTitlesData(
-            leftTitles: const AxisTitles(
+            leftTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
                 reservedSize: 40,
+                getTitlesWidget: (value, meta) {
+                  return Text(
+                    value.toInt().toString(),
+                    style: const TextStyle(
+                      fontFamily: 'SF Pro Display',
+                      fontSize: 9,
+                      color: Color(0x66FFFFFF)
+                    ),
+                  );
+                },
               ),
             ),
             rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -348,7 +358,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           PieChart(
             PieChartData(
               sectionsSpace: 2,
-              centerSpaceRadius: 80,
+              centerSpaceRadius: 100,
               sections: categoryData.isEmpty
                   ? [
                       PieChartSectionData(
