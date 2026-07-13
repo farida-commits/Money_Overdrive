@@ -11,7 +11,7 @@ class AppTheme {
       scaffoldBackgroundColor: AppColors.background,
       colorScheme: const ColorScheme.light(
         primary: AppColors.primary,
-        // surface: AppColors.background,
+        surface: AppColors.grey,
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.background,

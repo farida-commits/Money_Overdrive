@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:goal_path/core/widgets/app_bottom_nav_bar.dart';
 import 'package:goal_path/features/analytics/analytics_screen.dart';
 import 'package:goal_path/features/goals/goals_screen.dart';
 import 'package:goal_path/features/home/checklist_screen.dart';
@@ -23,35 +24,35 @@ class _HomeScreenState extends State<HomeScreen> {
         AnalyticsScreen(),
         SettingsScreen(),
       ][currentIdex],
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: AppBottomNavBar(
         currentIndex: currentIdex,
         onTap: (value) {
           setState(() {
             currentIdex = value;
           });
         },
-        backgroundColor: const Color(0xFF1A1F27), // конкреттүү түс бер
-        selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.grey,
-        type: BottomNavigationBarType.fixed,
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.checklist_rounded),
-            label: 'Cheklist',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.track_changes),
-            label: 'Goals',
-          ),
-          BottomNavigationBarItem(
-            icon:  Icon(Icons.bar_chart),
-            label: 'Analytics',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings ),
-            label: 'Settings',
-          ),
-        ],
+        // backgroundColor: const Color(0xFF1A1F27), // конкреттүү түс бер
+        // selectedItemColor: Colors.white,
+        // unselectedItemColor: Colors.grey,
+        // type: BottomNavigationBarType.fixed,
+        // items: [
+        //   BottomNavigationBarItem(
+        //     icon: Icon(Icons.checklist_rounded),
+        //     label: 'Cheklist',
+        //   ),
+        //   BottomNavigationBarItem(
+        //     icon: Icon(Icons.track_changes),
+        //     label: 'Goals',
+        //   ),
+        //   BottomNavigationBarItem(
+        //     icon:  Icon(Icons.bar_chart),
+        //     label: 'Analytics',
+        //   ),
+        //   BottomNavigationBarItem(
+        //     icon: Icon(Icons.settings ),
+        //     label: 'Settings',
+        //   ),
+        // ],
       ),
     );
   }

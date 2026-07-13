@@ -1,10 +1,18 @@
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:intl/intl.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/cupertino.dart';
-import '../../core/theme/app_colors.dart';
+import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:goal_path/core/theme/app_colors.dart';
+import 'package:goal_path/core/widgets/app_button.dart';
+import 'package:goal_path/core/constants/app_sizes.dart';
+import 'package:goal_path/core/constants/app_strings.dart';
+import 'package:goal_path/core/widgets/app_text_field.dart';
+import 'package:goal_path/core/widgets/app_calendar_dialog.dart';
+// TODO: когда добавим Provider — заменим setState на notifyListeners()
 
 class AddItemScreen extends StatefulWidget {
   const AddItemScreen({super.key});
@@ -17,401 +25,517 @@ class _AddItemScreenState extends State<AddItemScreen> {
   final _nameController = TextEditingController();
   final _priceController = TextEditingController();
   final _commentController = TextEditingController();
+  final _nameFocus = FocusNode();
+  final _priceFocus = FocusNode();
+  final _commentFocus = FocusNode();
+  
+  Uint8List? _selectedImageBytes;
+  File? _selectedImage;
   String? _selectedCategory;
   DateTime _selectedDate = DateTime.now();
-  bool _isPurchased = false;
-  File? _image;
+  bool _isUnpurchased = true;
+  bool _isCategoryOpen = false;
 
-  final List<String> _categories = [
-    'Clothing and footwear',
-    'Electronics and gadgets',
-    'Home and interior',
-    'Furniture',
-    'Cosmetics and perfumes',
-    'Sports and outdoor activities',
-    'Goods for children',
-    'Automotive goods',
-    'Gifts and souvenirs',
-    'Travel and leisure',
-    'Hobbies and creativity',
-    'Health and medicine',
-    'Home appliances',
-    'Education and courses',
-    'Jewelry',
-    'Toys and Games',
-  ];
+  final _picker = ImagePicker();
 
-  Future<void> _pickImage() async {
-    final status = await Permission.photos.request();
+  bool get _isFormValid =>
+      _nameController.text.trim().isNotEmpty &&
+      _selectedCategory != null &&
+      _priceController.text.trim().isNotEmpty;
 
-    if (status.isGranted || status.isLimited) {
-      final picker = ImagePicker();
-      final picked = await picker.pickImage(source: ImageSource.gallery);
-      if (picked != null) {
-        setState(() => _image = File(picked.path));
-      }
-    } else if (status.isPermanentlyDenied) {
-      _showDeniedDialog();
-    }
+  @override
+  void initState() {
+    super.initState();
+    _nameController.addListener(_rebuild);
+    _priceController.addListener(_rebuild);
+    _commentFocus.addListener(_rebuild);
   }
 
-  void _showDeniedDialog() {
-    showDialog(
+  void _rebuild() => setState(() {});
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _priceController.dispose();
+    _commentController.dispose();
+    _nameFocus.dispose();
+    _priceFocus.dispose();
+    _commentFocus.dispose();
+    super.dispose();
+  }
+
+  Future<void> _onAddPhotoTap() async {
+    await showCupertinoDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: Colors.white,
+      builder: (ctx) => CupertinoAlertDialog(
         title: const Text(
-          'Access to Photos has been denied',
+          AppStrings.photoPermissionTitle,
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
             color: Colors.black,
+            fontSize: 17,
+            fontFamily: 'SF Pro Text',
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.41,
+            height: 22/17,
           ),
         ),
         content: const Text(
-          'Allow access in Settings. It lets you upload pictures of items you want to buy',
+          AppStrings.photoPermissionDesc,
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 13, color: Colors.black54),
-        ),
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: AppSizes.fontLabel,
+            fontFamily: 'SF Pro Text',
+            fontWeight: FontWeight.w400,
+            letterSpacing: -0.08
+          ),
+          ),
         actions: [
-          Row(
-            children: [
-              Expanded(
-                child: TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(color: AppColors.primary),
-                  ),
-                ),
+          CupertinoDialogAction(
+            child: const Text(
+              AppStrings.selectPhotos,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Color(0xff007AFF),
+                fontSize: 17,
+                fontFamily: 'SF Pro Text',
+                fontWeight: FontWeight.w400,
+                letterSpacing: -0.41,
+                height: 22/17,
               ),
-              Container(width: 1, height: 44, color: Colors.grey.shade300),
-              Expanded(
-                child: TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    openAppSettings();
-                  },
-                  child: const Text(
-                    'Settings',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
+            ),
+            onPressed: () { Navigator.pop(ctx); _pickImage(); },
+          ),
+          CupertinoDialogAction(
+            child: const Text(
+              AppStrings.allowAllPhotos,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Color(0xff007AFF),
+                fontSize: 17,
+                fontFamily: 'SF Pro Text',
+                fontWeight: FontWeight.w400,
+                letterSpacing: -0.41,
+                height: 22/17,
               ),
-            ],
+            ),
+            onPressed: () { Navigator.pop(ctx); _pickImage(); },
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            child: const Text(
+              AppStrings.dontAllow,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Color(0xff007AFF),
+                fontSize: 17,
+                fontFamily: 'SF Pro Text',
+                fontWeight: FontWeight.w400,
+                letterSpacing: -0.41,
+                height: 22/17,
+              ),
+              
+            ),
+            onPressed: () => Navigator.pop(ctx),
           ),
         ],
       ),
     );
   }
 
-  Future<void> _pickDate() async {
-    final picked = await showDatePicker(
+  Future<void> _onPhotoTapWhenDenied() async {
+    await showCupertinoDialog(
       context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2030),
-      builder: (context, child) {
-        return Theme(
-          data: ThemeData.dark(),
-          child: child!,
-        );
-      },
+      builder: (ctx) => CupertinoAlertDialog(
+        title: const Text(
+          AppStrings.accessDeniedTitle,
+          style: TextStyle(
+            color: Colors.black,
+                fontSize: 17,
+                fontFamily: 'SF Pro Text',
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.41,
+                height: 22/17,
+          ),
+        ),
+        content: const Text(
+          AppStrings.accessDeniedDesc,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 13,
+            fontFamily: 'SF Pro Text',
+            fontWeight: FontWeight.w400,
+            letterSpacing: -0.08,
+            height: 22/17,
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text(
+              AppStrings.cancel,
+              style: TextStyle(
+                color: Color(0xff007AFF),
+                fontWeight: FontWeight.w400,
+                fontSize: 17,
+                fontFamily: 'SF Pro Text',
+                letterSpacing: 0.41,
+                height: 22 / 17,
+              ),
+            ),
+            onPressed: () => Navigator.pop(ctx),
+          ),
+          CupertinoDialogAction(
+            child: const Text(
+              AppStrings.settings,
+              style: TextStyle(
+                color: Color(0xff007AFF),
+                fontWeight: FontWeight.w600,
+                fontSize: 17,
+                fontFamily: 'SF Pro Text',
+                letterSpacing: 0.41,
+                height: 22 / 17,
+              ),
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              // TODO: открыть настройки (app_settings пакет)
+            },
+          ),
+        ],
+      ),
     );
-    if (picked != null) setState(() => _selectedDate = picked);
   }
 
-  bool get _isFormValid =>
-      _nameController.text.isNotEmpty &&
-      _selectedCategory != null &&
-      _priceController.text.isNotEmpty;
+  Future<void> _pickImage() async {
+    final picked = await _picker.pickImage(source: ImageSource.gallery);
+    if (picked != null){
+      if (kIsWeb) {
+        final bytes = await picked.readAsBytes();
+        setState(() => _selectedImageBytes = bytes);
+      } else {
+        setState(() => _selectedImage = File(picked.path));
+      }
+    }
+  }
 
-  void _submit() {
+  // ИЗМЕНЕНО: открываем диалог по центру экрана — как в Figma
+  Future<void> _onDateTap() async {
+    FocusScope.of(context).unfocus();
+    await showDialog(
+      context: context,
+      barrierColor: Colors.black54, // затемнение фона
+      builder: (ctx) => AppCalendarDialog(
+        initialDate: _selectedDate,
+        today: DateTime.now(),
+        onDateSelected: (date) => setState(() => _selectedDate = date),
+      ),
+    );
+  }
+
+  void _onAddTap() {
     if (!_isFormValid) return;
     Navigator.pop(context, {
-      'name': _nameController.text,
+      'name': _nameController.text.trim(),
       'category': _selectedCategory,
-      'price': _priceController.text,
-      'date': '${_selectedDate.day.toString().padLeft(2, '0')}.${_selectedDate.month.toString().padLeft(2, '0')}.${_selectedDate.year}',
-      'comment': _commentController.text,
-      'purchased': _isPurchased,
-      'image': _image?.path,
+      'price': _priceController.text.trim(),
+      'date': DateFormat('dd.MM.yyyy').format(_selectedDate),
+      'comment': _commentController.text.trim(),
+      'purchased': !_isUnpurchased,
+      'image': kIsWeb ? _selectedImageBytes : _selectedImage?.path,
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
         backgroundColor: AppColors.background,
-        centerTitle: true,
-        leading: IconButton(
-          icon: SvgPicture.asset(
-            'assets/icons/back.svg',
-            width: 24,
-            height: 24,
-            colorFilter: ColorFilter.mode(
-              AppColors.textOnDark, 
-              BlendMode.srcIn,
-            ),
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Add item',
-          style: TextStyle(
-            fontFamily: 'SF Pro Display',
-            color: AppColors.textOnDark,
-            fontSize: 24,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 14 * 0.02,
-          ),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16,),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Фото
-            Center(
-              child: GestureDetector(
-                onTap: _pickImage,
-                child: Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: AppColors.background,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppColors.textOnDark,
-                    ),
-                    image: _image != null
-                        ? DecorationImage(
-                            image: FileImage(_image!),
-                            fit: BoxFit.cover,
-                          )
-                        : null,
-                  ),
-                  child: _image == null
-                      ? Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SvgPicture.asset(
-                              'assets/icons/mdi_camera.svg',
-                              width: 24,
-                              height: 24,
-                              colorFilter: const ColorFilter.mode(
-                                AppColors.textOnDark,
-                                BlendMode.srcIn,
-                              ),
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              'Add photo',
-                              style: TextStyle(
-                                color: AppColors.textOnDark,
-                                fontSize: 20,
-                                fontFamily: 'SF Pro Display',
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        )
-                      : null,
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Purchase name
-            _label('Purchase name'),
-            _inputField(_nameController),
-            const SizedBox(height: 16),
-
-            // Category
-            _label('Category'),
-            _dropdownField(),
-            const SizedBox(height: 16),
-
-            // Price
-            _label('Purchase price'),
-            _inputField(_priceController, prefix: '\$',
-                keyboardType: TextInputType.number),
-            const SizedBox(height: 16),
-
-            // Date
-            _label('Date added to checklist'),
-            _dateField(),
-            const SizedBox(height: 16),
-
-            // Comment
-            _label('Comment (Optional)'),
-            _inputField(_commentController, maxLines: 4),
-            const SizedBox(height: 16),
-
-            // Checkboxes
-            Row(
+        appBar: _buildAppBar(),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _checkbox('Unpurchased', !_isPurchased, Color(0xFFD33636), () {
-                  setState(() => _isPurchased = false);
-                }),
-                const SizedBox(width: 24),
-                _checkbox('Purchased', _isPurchased, Color(0xFF12B28C), () {
-                  setState(() => _isPurchased = true);
-                }),
+                const SizedBox(height: AppSizes.spaceM),
+                _buildPhotoPicker(),
+                const SizedBox(height: AppSizes.spaceXS),
+
+                _buildLabel(AppStrings.purchaseName),
+                const SizedBox(height: 4),
+                AppTextField(controller: _nameController, focusNode: _nameFocus),
+                const SizedBox(height: AppSizes.spaceM),
+
+                _buildLabel(AppStrings.category),
+                const SizedBox(height: 4),
+                _buildCategoryDropdown(),
+                const SizedBox(height: AppSizes.spaceM),
+
+                _buildLabel(AppStrings.purchasePrice),
+                const SizedBox(height: 4),
+                AppTextField(
+                  controller: _priceController,
+                  focusNode: _priceFocus,
+                  prefixText: '\$',
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    TextInputFormatter.withFunction((oldValue, newValue) {
+                      final text = newValue.text.replaceAll(' ', '');
+                      if (text.isEmpty) return newValue;
+
+                      final buffer = StringBuffer();
+                      for (int i = 0; i < text.length; i++) {
+                        if (i !=0 && (text.length - i) % 3 == 0) {
+                          buffer.write(' ');
+                        }
+                        buffer.write(text[i]);
+                      }
+
+                      final formatted = buffer.toString();
+                      return TextEditingValue(
+                        text: formatted,
+                        selection: TextSelection.collapsed(offset: formatted.length),
+                      );
+                    }),
+                  ],
+                ),
+                const SizedBox(height: AppSizes.spaceM),
+
+                _buildLabel(AppStrings.dateAddedToChecklist),
+                const SizedBox(height: 4),
+                _buildDateField(),
+                const SizedBox(height: AppSizes.spaceS),
+
+                _buildLabel(AppStrings.commentOptional),
+                const SizedBox(height: 4),
+                AppTextField(
+                  controller: _commentController,
+                  focusNode: _commentFocus,
+                  isMultiline: true,
+                ),
+                const SizedBox(height: AppSizes.spaceM),
+
+                _buildCheckboxRow(),
+                const SizedBox(height: AppSizes.spaceXL),
+
+                AppButton(
+                  text: AppStrings.add,
+                  onPressed: _isFormValid ? _onAddTap : null,
+                ),
+                const SizedBox(height: AppSizes.spaceXL),
               ],
             ),
-            const SizedBox(height: 24),
-
-            // Add button
-            SizedBox(
-              width: double.infinity,
-              height: 60,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _isFormValid
-                      ? AppColors.primary
-                      : AppColors.grey,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onPressed: _isFormValid ? _submit : null,
-                child: const Text(
-                  'Add',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _label(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        text,
-        style: const TextStyle(
+  AppBar _buildAppBar() {
+    return AppBar(
+      backgroundColor: AppColors.background,
+      centerTitle: true,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios,
+            color: AppColors.textOnDark, size: AppSizes.iconM),
+        onPressed: () => Navigator.pop(context),
+      ),
+      title: const Text(
+        AppStrings.addItem,
+        style: TextStyle(
           fontFamily: 'SF Pro Display',
+          fontSize: AppSizes.fontAppar,
+          fontWeight: FontWeight.w500,
           color: AppColors.textOnDark,
-          fontSize: 14,
-          fontWeight: FontWeight.w400,
           letterSpacing: 14 * 0.02,
         ),
       ),
+      elevation: 0,
     );
   }
 
-  Widget _inputField(TextEditingController controller,
-      {String? prefix, TextInputType? keyboardType, int maxLines = 1}) {
-    return TextField(
-      controller: controller,
-      keyboardType: keyboardType,
-      maxLines: maxLines,
-      style: const TextStyle(
-        color: AppColors.textOnDark,
-        fontFamily: 'SF Pro Display',
-        fontSize: 20,
-        fontWeight: FontWeight.w500,
-        letterSpacing: 14 * 0.02,
-        ),
-      onChanged: (_) => setState(() {}),
-      decoration: InputDecoration(
-        prefixText: prefix,
-        prefixStyle: const TextStyle(color: AppColors.textOnDark),
-        filled: true,
-        fillColor: const Color(0xFF1E2530),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(
-            color: Color(0xffBBBBBB),
-            width: 1, 
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(
-            color: Color(0xffBBBBBB),
-            width: 1,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _dropdownField() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E2530),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: _selectedCategory,
-          isExpanded: true,
-          dropdownColor: const Color(0xFF1E2530),
-          icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.grey),
-          hint: const Text(''),
-          items: _categories
-              .map((c) => DropdownMenuItem(
-                    value: c,
-                    child: Text(c,
-                        style: const TextStyle(
-                          color: AppColors.textOnDark,
+  Widget _buildPhotoPicker() {
+    return Center(
+      child: GestureDetector(
+        onTap: (kIsWeb ? _selectedImageBytes == null : _selectedImage == null)
+          ? _onAddPhotoTap
+          : _onPhotoTapWhenDenied,
+          child:Container(
+            width: AppSizes.photoSize,
+            height: AppSizes.photoSize,
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              borderRadius: BorderRadius.circular(AppSizes.photoRadius),
+              border: Border.all(color: Color(0xFFBBBBBB),),
+            ),
+          child: (kIsWeb ? _selectedImageBytes != null : _selectedImage != null)
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(AppSizes.photoRadius),
+                  child: kIsWeb
+                  ? Image.memory(_selectedImageBytes!, fit: BoxFit.cover)
+                  : Image.file(_selectedImage!, fit: BoxFit.cover,),
+                )
+              : const Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.photo_camera,
+                        color: AppColors.textOnDark, size: 32),
+                    SizedBox(height: AppSizes.spaceS),
+                    Text(AppStrings.addPhoto,
+                        style: TextStyle(
                           fontFamily: 'SF Pro Display',
-                          fontSize: 20,
+                          fontSize: AppSizes.fontButton,
+                          color: AppColors.textOnDark,
                           fontWeight: FontWeight.w500,
                           letterSpacing: 14 * 0.02,
                         ),
                       ),
-                  ))
-              .toList(),
-          onChanged: (val) => setState(() => _selectedCategory = val),
+                  ],
+                ),
         ),
       ),
     );
   }
 
-  Widget _dateField() {
+  Widget _buildLabel(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontFamily: 'SF Pro Display',
+        fontSize: AppSizes.fontLabel,
+        color: AppColors.textOnDark,
+        letterSpacing: 14 * 0.02,
+        fontWeight: FontWeight.w100,
+      ),
+    );
+  }
+
+  Widget _buildCategoryDropdown() {
+    return Column(
+      children: [
+        GestureDetector(
+          onTap: () => setState(() => _isCategoryOpen = !_isCategoryOpen),
+          child: Container(
+            height: AppSizes.fieldHeight,
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM),
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              borderRadius: _isCategoryOpen
+                  ? const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusM))
+                  : BorderRadius.circular(AppSizes.radiusM),
+              border: Border.all(
+                color: Color(0xffBBBBBB),
+                width: AppSizes.fieldBorderWidth,
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _selectedCategory ?? '',
+                    style: const TextStyle(
+                      fontFamily: 'SF Pro Display',
+                      fontSize: AppSizes.fontButton,
+                      color: AppColors.textOnDark,
+                    ),
+                  ),
+                ),
+                Icon(
+                  _isCategoryOpen
+                      ? Icons.keyboard_arrow_up
+                      : Icons.keyboard_arrow_down,
+                  color: AppColors.textOnDark,
+                  size: 32,
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_isCategoryOpen)
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              borderRadius: const BorderRadius.vertical(
+                  bottom: Radius.circular(AppSizes.radiusM)),
+              border: Border.all(
+                  color: Color(0xffBBBBBB), width: AppSizes.fieldBorderWidth),
+            ),
+            child: ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: AppStrings.categories.length,
+              itemBuilder: (ctx, i) {
+                final cat = AppStrings.categories[i];
+                final isSelected = _selectedCategory == cat;
+                return InkWell(
+                  onTap: () => setState(() {
+                    _selectedCategory = cat;
+                    _isCategoryOpen = false;
+                  }),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSizes.paddingM,
+                        vertical: AppSizes.paddingM),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(cat,
+                              style: TextStyle(
+                                fontFamily: 'SF Pro Display',
+                                fontSize: AppSizes.fontButton,
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 14 * 0.02,
+                                color: isSelected
+                                    ? AppColors.primary
+                                    : AppColors.textOnDark,
+                              )),
+                        ),
+                        _buildSquareCheckbox(isSelected),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+      ],
+    );
+  }
+
+  // Поле даты — тап открывает диалог по центру
+  Widget _buildDateField() {
     return GestureDetector(
-      onTap: _pickDate,
+      onTap: _onDateTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        height: AppSizes.fieldHeight,
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E2530),
-          borderRadius: BorderRadius.circular(10),
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(AppSizes.radiusM),
+          border: Border.all(color: AppColors.grey, width: AppSizes.fieldBorderWidth),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              '${_selectedDate.day.toString().padLeft(2, '0')}.${_selectedDate.month.toString().padLeft(2, '0')}.${_selectedDate.year}',
-              style: const TextStyle(
-                color: AppColors.textOnDark,
-                fontFamily: 'SF Pro Display',
-                fontSize: 20,
-                fontWeight: FontWeight.w500,
-                letterSpacing: 14 * 0.02,
+            Expanded(
+              child: Text(
+                DateFormat('dd.MM.yyyy').format(_selectedDate),
+                style: const TextStyle(
+                  fontFamily: 'SF Pro Display',
+                  fontSize: AppSizes.fontButton,
+                  color: AppColors.textOnDark,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 14 * 0.02,
+                ),
               ),
             ),
             const Icon(
-              CupertinoIcons.calendar,
-              color: AppColors.primary,
-              size: 24,
+              Icons.calendar_month_outlined,
+              color: AppColors.primary, 
+              size: AppSizes.iconM,
             ),
           ],
         ),
@@ -419,41 +543,82 @@ class _AddItemScreenState extends State<AddItemScreen> {
     );
   }
 
-  Widget _checkbox(
-      String label, bool value, Color color, VoidCallback onTap) {
+  Widget _buildCheckboxRow() {
+    return Row(
+      children: [
+        _buildCheckboxItem(
+          label: AppStrings.unpurchased,
+          isChecked: _isUnpurchased,
+          checkedColor: const Color(0xFFD33636),
+          onTap: () => setState(() => _isUnpurchased = true),
+        ),
+        const SizedBox(width: AppSizes.fieldHeight),
+        _buildCheckboxItem(
+          label: AppStrings.purchased,
+          isChecked: !_isUnpurchased,
+          checkedColor: Color(0xff12B28C),
+          onTap: () => setState(() => _isUnpurchased = false),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCheckboxItem({
+    required String label,
+    required bool isChecked,
+    required Color checkedColor,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Row(
         children: [
           Container(
-            width: 24,
-            height: 24,
+            width: AppSizes.checkboxSize,
+            height: AppSizes.checkboxSize,
             decoration: BoxDecoration(
-              color: value ? color : Colors.transparent,
-              borderRadius: BorderRadius.circular(6),
+              color: isChecked ? checkedColor : Colors.transparent,
+              borderRadius: BorderRadius.circular(4),
               border: Border.all(
-                color: value ? color : AppColors.grey,
-                width: 2,
+                color: isChecked ? checkedColor : Color(0xffAEAEB2),
+                width: 1.5,
               ),
             ),
-            child: value
-                ? const Icon(
-                  Icons.check, 
-                  size: 16, 
-                  color: Colors.white,
-                )
+            child: isChecked
+                ? const Icon(Icons.check, color: Colors.white, size: 21)
                 : null,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSizes.spaceS),
           Text(
             label,
-            style: const TextStyle(
-              color: AppColors.textOnDark,
-              fontSize: 14,
+            style: TextStyle(
+              fontFamily: 'SF Pro Display',
+              fontSize: AppSizes.fontButton,
+              fontWeight: FontWeight.w400,
+              letterSpacing: 14 * 0.02,
+              color: isChecked ? AppColors.textOnDark : AppColors.grey,
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSquareCheckbox(bool isSelected) {
+    return Container(
+      width: AppSizes.checkboxSize,
+      height: AppSizes.checkboxSize,
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        border: Border.all(
+          color: isSelected ? AppColors.primary : AppColors.grey,
+          width: 1.5,
+        ),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: isSelected
+          ? const Icon(Icons.check, color: AppColors.primary, size: 14)
+          : null,
     );
   }
 }

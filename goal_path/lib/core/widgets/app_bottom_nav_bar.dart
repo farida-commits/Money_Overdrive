@@ -17,7 +17,13 @@ class AppBottomNavBar extends StatelessWidget {
     return Container(
       height: 60,
       decoration: const BoxDecoration(
-        color: AppColors.background
+      color: AppColors.background,
+        border: Border(
+          top: BorderSide(
+            color: Color(0xFF99FFFFFF),
+            width: 1.5,
+          ),
+        ),
       ),
       child: Row(
         children: [
