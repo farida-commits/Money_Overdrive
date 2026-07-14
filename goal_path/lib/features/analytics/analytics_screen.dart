@@ -14,21 +14,21 @@ class AnalyticsScreen extends StatefulWidget {
 }
 
 class _AnalyticsScreenState extends State<AnalyticsScreen> {
-  // ДОБАВИЛИ: Purchased/Planned toggle
+  // Purchased/Planned toggle
   bool _isPurchased = true;
-  // ДОБАВИЛИ: See all / Hide
+  // See all / Hide
   bool _showAll = false;
 
   // Категориялар боюнча түстөр
   static const _categoryColors = [
     Color(0xFF4132C7), // синий
-    Color(0xFFC732BD), // розовый
-    Color(0xFF32C7BA), // голубой
     Color(0xFFC78D32), // оранжевый
+    Color(0xFF32C7BA), // голубой
+    Color(0xFFC732BD), // розовый
     Color(0xFFEDED0D), // зеленый
     Color(0xFFEF5350), // красный
+    Color(0xFF5C9A3E), // бирюзовый
     Color(0xFF522583), // фиолетовый
-    Color(0xFF26A69A), // бирюзовый
   ];
 
   // Прайс санды алуу
@@ -262,96 +262,163 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
 
-  // ── Bar chart ─────────────────────────────
+  // ── Bar chart (Интервалдары бирдей жана Макс 1500 чектөөсү менен) ──
   Widget _buildBarChart(Map<String, int> monthlyData) {
-    final months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    final maxY = monthlyData.values.isEmpty
-        ? 1000.0
-        : monthlyData.values.reduce((a, b) => a > b ? a : b).toDouble() * 1.2;
+    final months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
 
-    return SizedBox(
-      height: 160,
-      child: BarChart(
-        BarChartData(
-          backgroundColor: Colors.transparent,
-          maxY: maxY,
-          minY: 0,
-          gridData: FlGridData(
-            show: true,
-            drawVerticalLine: false,
-            horizontalInterval: maxY / 4,
-            getDrawingHorizontalLine: (_) => const FlLine(
-              color: Color(0x33FFFFFF),
-              strokeWidth: 1,
+    final List<double> realTicks = [0, 500, 750, 1000, 1500];
+    
+    // Интервалдар бирдей болушу үчүн визуалдык 0дөн 4кө чейинки шкалага өткөрүү
+    double getVisualY(double realValue) {
+      if (realValue <= 0) return 0.0;
+      if (realValue <= 500) {
+        return (realValue / 500.0) * 1.0;
+      } else if (realValue <= 750) {
+        return 1.0 + ((realValue - 500) / 250.0) * 1.0;
+      } else if (realValue <= 1000) {
+        return 2.0 + ((realValue - 750) / 250.0) * 1.0;
+      } else {
+        if (realValue >= 1500) return 4.0; // 1500дөн көп болсо макс деңгээлде калат
+        return 3.0 + ((realValue - 1000) / 500.0) * 1.0;
+      }
+    }
+
+    final barGroups = List.generate(12, (index) {
+      final month = months[index];
+      final realValue = (monthlyData[month] ?? 0).toDouble();
+      final visualY = getVisualY(realValue);
+
+      return BarChartGroupData(
+        x: index,
+        barRods: [
+          BarChartRodData(
+            toY: visualY,
+            color: const Color(0xFF3252C7), 
+            width: 14,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(2),
+              topRight: Radius.circular(2),
             ),
           ),
-          borderData: FlBorderData(show: false),
+        ],
+      );
+    });
+
+    return SizedBox(
+      height: 80,
+      child: BarChart(
+        BarChartData(
+          alignment: BarChartAlignment.spaceAround,
+          maxY: 4.0,
+          minY: 0.0,
+          barTouchData: BarTouchData(
+            enabled: true,
+            touchTooltipData: BarTouchTooltipData(
+              getTooltipColor: (group) => const Color(0xFF252B35),
+              tooltipBorderRadius: BorderRadius.circular(6),
+              getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                final month = months[group.x];
+                final realValue = monthlyData[month] ?? 0;
+                return BarTooltipItem(
+                  '\$$realValue', // 1500дөн көп болсо да реалдуу сумма көрүнөт
+                  const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                );
+              },
+            ),
+          ),
           titlesData: FlTitlesData(
+            show: true,
+            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
-                reservedSize: 40,
+                reservedSize: 32,
+                interval: 1.0, 
                 getTitlesWidget: (value, meta) {
-                  return Text(
-                    value.toInt().toString(),
-                    style: const TextStyle(
-                      fontFamily: 'SF Pro Display',
-                      fontSize: 9,
-                      color: Color(0x66FFFFFF)
-                    ),
-                  );
+                  final intIdx = value.round();
+                  if (intIdx >= 0 && intIdx < realTicks.length) {
+                    final label = realTicks[intIdx].toInt().toString();
+                    return SideTitleWidget(
+                      meta: meta,
+                      space: 8,
+                      child: Text(
+                        label,
+                        style: const TextStyle(
+                          color: Color(0x99FFFFFF),
+                          fontFamily: 'SF Pro Display',
+                          fontSize: 11,
+                        ),
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
                 },
               ),
             ),
-            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
+                reservedSize: 28,
                 getTitlesWidget: (value, meta) {
-                  final idx = value.toInt();
-                  if (idx < 0 || idx >= months.length) return const SizedBox();
-                  return Text(
-                    months[idx],
-                    style: const TextStyle(
-                      fontFamily: 'SF Pro Display',
-                      fontSize: 7,
-                      color: Color(0x66FFFFFF),
-                      letterSpacing: 14 * 0.02,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  );
+                  final index = value.toInt();
+                  if (index >= 0 && index < 12) {
+                    return SideTitleWidget(
+                      meta: meta,
+                      space: 6,
+                      child: Text(
+                        months[index],
+                        style: const TextStyle(
+                          color: Color(0x99FFFFFF),
+                          fontFamily: 'SF Pro Display',
+                          fontSize: 10,
+                        ),
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
                 },
               ),
             ),
           ),
-          barGroups: List.generate(12, (i) {
-            final month = months[i];
-            final value = monthlyData[month] ?? 0;
-            return BarChartGroupData(
-              x: i,
-              barRods: [
-                BarChartRodData(
-                  toY: value.toDouble(),
-                  color: AppColors.primary,
-                  width: 16,
-                  // borderRadius: const BorderRadius.vertical(
-                  //     top: Radius.circular(4)),
-                ),
-              ],
-            );
-          }),
+          gridData: FlGridData(
+            show: true,
+            drawVerticalLine: true,
+            verticalInterval: 1,
+            horizontalInterval: 1,
+            getDrawingHorizontalLine: (value) {
+              return FlLine(color: const Color(0x1BFFFFFF), strokeWidth: 1);
+            },
+            getDrawingVerticalLine: (value) {
+              return FlLine(color: const Color(0x11FFFFFF), strokeWidth: 1);
+            },
+          ),
+          borderData: FlBorderData(
+            show: true,
+            border: const Border(
+              bottom: BorderSide(color: Color(0x44FFFFFF), width: 1),
+              top: BorderSide(color: Color(0x1BFFFFFF), width: 1),
+            ),
+          ),
+          barGroups: barGroups,
         ),
       ),
     );
   }
 
-  // ── Donut chart ───────────────────────────
+  // ── Donut chart (Калыбына келтирилди) ───────────────────
   Widget _buildDonutChart(List<MapEntry<String, int>> categoryData) {
     final total = categoryData.fold<int>(0, (s, e) => s + e.value);
 
     return SizedBox(
-      height: 260,
+      height: 87,
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -372,8 +439,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                           ? (e.value.value / total * 100).round()
                           : 0;
                       return PieChartSectionData(
-                        color: _categoryColors[
-                            e.key % _categoryColors.length],
+                        color: _categoryColors[e.key % _categoryColors.length],
                         value: e.value.value.toDouble(),
                         title: '$percent%',
                         titleStyle: const TextStyle(
@@ -386,7 +452,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     }).toList(),
             ),
           ),
-          // Ортодогу текст
           Text(
             _isPurchased
                 ? 'What was\nthe most spent on'
@@ -455,7 +520,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   // ── Категория тизмеси ─────────────────────
   Widget _buildCategoryList(List<MapEntry<String, int>> categoryData) {
     final total = categoryData.fold<int>(0, (s, e) => s + e.value);
-    // See all / Hide
     final displayed = _showAll ? categoryData : categoryData.take(4).toList();
 
     return Container(
@@ -466,7 +530,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       ),
       child: Column(
         children: [
-          // Header
           Row(
             children: [
               const Spacer(),
@@ -484,8 +547,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             ],
           ),
           const SizedBox(height: 8),
-
-          // Тизме
           ...displayed.asMap().entries.map((e) {
             final percent =
                 total > 0 ? (e.value.value / total * 100).round() : 0;
@@ -532,14 +593,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   }
 
   // ── Helper методдор ───────────────────────
-
-  // Айлар боюнча сумма
   Map<String, int> _getMonthlyData(List<Map<String, dynamic>> purchases) {
     final Map<String, int> data = {};
     for (final item in purchases) {
       try {
         final date = item['date']?.toString() ?? '';
-        // dd.MM.yyyy форматы
         final parts = date.split('.');
         if (parts.length == 3) {
           final monthIndex = int.parse(parts[1]) - 1;
@@ -553,7 +611,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     return data;
   }
 
-  // Категория боюнча сумма — сорттолгон
   List<MapEntry<String, int>> _getCategoryData(
       List<Map<String, dynamic>> items) {
     final Map<String, int> data = {};
@@ -566,7 +623,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     return sorted;
   }
 
-  // Сумманы форматтоо: 6373 → "6 373"
   String _formatAmount(int amount) {
     return amount.toString().replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
