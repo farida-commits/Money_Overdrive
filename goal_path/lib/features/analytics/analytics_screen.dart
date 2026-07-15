@@ -264,168 +264,126 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   // ── Bar chart (Интервалдары бирдей жана Макс 1500 чектөөсү менен) ──
   Widget _buildBarChart(Map<String, int> monthlyData) {
-    final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-
-    final List<double> realTicks = [0, 500, 750, 1000, 1500];
-    
-    // Интервалдар бирдей болушу үчүн визуалдык 0дөн 4кө чейинки шкалага өткөрүү
-    double getVisualY(double realValue) {
-      if (realValue <= 0) return 0.0;
-      if (realValue <= 500) {
-        return (realValue / 500.0) * 1.0;
-      } else if (realValue <= 750) {
-        return 1.0 + ((realValue - 500) / 250.0) * 1.0;
-      } else if (realValue <= 1000) {
-        return 2.0 + ((realValue - 750) / 250.0) * 1.0;
-      } else {
-        if (realValue >= 1500) return 4.0; // 1500дөн көп болсо макс деңгээлде калат
-        return 3.0 + ((realValue - 1000) / 500.0) * 1.0;
-      }
-    }
-
-    final barGroups = List.generate(12, (index) {
-      final month = months[index];
-      final realValue = (monthlyData[month] ?? 0).toDouble();
-      final visualY = getVisualY(realValue);
-
-      return BarChartGroupData(
-        x: index,
-        barRods: [
-          BarChartRodData(
-            toY: visualY,
-            color: const Color(0xFF3252C7), 
-            width: 14,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(2),
-              topRight: Radius.circular(2),
-            ),
-          ),
-        ],
-      );
-    });
-
-    return SizedBox(
-      height: 80,
-      child: BarChart(
-        BarChartData(
-          alignment: BarChartAlignment.spaceAround,
-          maxY: 4.0,
-          minY: 0.0,
-          barTouchData: BarTouchData(
-            enabled: true,
-            touchTooltipData: BarTouchTooltipData(
-              getTooltipColor: (group) => const Color(0xFF252B35),
-              tooltipBorderRadius: BorderRadius.circular(6),
-              getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                final month = months[group.x];
-                final realValue = monthlyData[month] ?? 0;
-                return BarTooltipItem(
-                  '\$$realValue', // 1500дөн көп болсо да реалдуу сумма көрүнөт
-                  const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                );
-              },
-            ),
-          ),
-          titlesData: FlTitlesData(
-            show: true,
-            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 32,
-                interval: 1.0, 
-                getTitlesWidget: (value, meta) {
-                  final intIdx = value.round();
-                  if (intIdx >= 0 && intIdx < realTicks.length) {
-                    final label = realTicks[intIdx].toInt().toString();
-                    return SideTitleWidget(
-                      meta: meta,
-                      space: 8,
-                      child: Text(
-                        label,
-                        style: const TextStyle(
-                          color: Color(0x99FFFFFF),
-                          fontFamily: 'SF Pro Display',
-                          fontSize: 11,
-                        ),
-                      ),
-                    );
-                  }
-                  return const SizedBox.shrink();
-                },
-              ),
-            ),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 28,
-                getTitlesWidget: (value, meta) {
-                  final index = value.toInt();
-                  if (index >= 0 && index < 12) {
-                    return SideTitleWidget(
-                      meta: meta,
-                      space: 6,
-                      child: Text(
-                        months[index],
-                        style: const TextStyle(
-                          color: Color(0x99FFFFFF),
-                          fontFamily: 'SF Pro Display',
-                          fontSize: 10,
-                        ),
-                      ),
-                    );
-                  }
-                  return const SizedBox.shrink();
-                },
-              ),
-            ),
-          ),
-          gridData: FlGridData(
-            show: true,
-            drawVerticalLine: true,
-            verticalInterval: 1,
-            horizontalInterval: 1,
-            getDrawingHorizontalLine: (value) {
-              return FlLine(color: const Color(0x1BFFFFFF), strokeWidth: 1);
-            },
-            getDrawingVerticalLine: (value) {
-              return FlLine(color: const Color(0x11FFFFFF), strokeWidth: 1);
-            },
-          ),
-          borderData: FlBorderData(
-            show: true,
-            border: const Border(
-              bottom: BorderSide(color: Color(0x44FFFFFF), width: 1),
-              top: BorderSide(color: Color(0x1BFFFFFF), width: 1),
-            ),
-          ),
-          barGroups: barGroups,
-        ),
-      ),
-    );
+    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  
+  // Максималдуу сумманы табуу (графиктин бийиктигин аныктоо үчүн)
+  int maxAmount = 0;
+  for (final amount in monthlyData.values) {
+    if (amount > maxAmount) maxAmount = amount;
   }
+  // Эгер баары 0 болсо, демейки бийиктик
+  if (maxAmount == 0) maxAmount = 1500;
+  
+  // Y огунун белгилери (туруктуу сандар)
+  final yLabels = [0, 500, 750, 1000, 1500];
+  
+  return Container(
+    height: 207,
+    padding: const EdgeInsets.only(top: 8, right: 8),
+    color: AppColors.background,
+    child: Column(
+      children: [
+        Expanded(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return CustomPaint(
+              painter: _BarChartGridPainter(yLabels: yLabels),
+              child: Padding(
+                // Сол жакта Y белгилери үчүн орун
+                padding: const EdgeInsets.only(left: 40, bottom: 0, top: 16,),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: months.map((month) {
+                    final amount = monthlyData[month] ?? 0;
+                    // Баганчанын бийиктиги (% менен)
+                    final heightFactor = maxAmount > 0 ? amount / maxAmount : 0;
+                    
+                    return Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 5),
+                        child: Tooltip(
+                          message: amount > 0
+                            ? '$month: \$${_formatAmount(amount)}'
+                            : '$month: \$0',
+                            preferBelow: false,
+                            verticalOffset: 10,
+                          child: Container(
+                            height: (constraints.maxHeight - 16) * heightFactor,
+                            // (MediaQuery.of(context).size.height * 0.12) * heightFactor,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  AppColors.primary,
+                                  Color(0xFF2A1F8C),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.zero,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            );
+            },
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(left: 40, top: 8,),
+          child: Row(
+            children: months.map((month) {
+              return Expanded(
+                child: Center(
+                  child: Text(
+                    month,
+                    style: const TextStyle(
+                      fontFamily: 'SF Pro Display',
+                      fontSize: 10,
+                      color: AppColors.grey,
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+  
+  Widget _leftTitle(String text) {
+  return Padding(
+    padding: const EdgeInsets.only(right: 8),
+    child: Text(
+      text,
+      style: const TextStyle(
+        fontFamily: 'SF Pro Display',
+        fontSize: 9,
+        color: Color(0x99FFFFFF),
+      ),
+    ),
+  );
+}
 
   // ── Donut chart (Калыбына келтирилди) ───────────────────
   Widget _buildDonutChart(List<MapEntry<String, int>> categoryData) {
     final total = categoryData.fold<int>(0, (s, e) => s + e.value);
 
     return SizedBox(
-      height: 87,
+      height: 279,
       child: Stack(
         alignment: Alignment.center,
         children: [
           PieChart(
             PieChartData(
               sectionsSpace: 2,
-              centerSpaceRadius: 100,
+              centerSpaceRadius: 103,
               sections: categoryData.isEmpty
                   ? [
                       PieChartSectionData(
@@ -469,7 +427,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       ),
     );
   }
-
   // ── Toggle Purchased / Planned ────────────
   Widget _buildToggle() {
     return Container(
@@ -629,4 +586,82 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       (m) => '${m[1]} ',
     );
   }
+}
+
+class _BarChartGridPainter extends CustomPainter {
+  final List<int> yLabels;
+  
+  _BarChartGridPainter({required this.yLabels});
+  
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.grey.withValues(alpha: 0.15)
+      ..strokeWidth = 1;
+    
+    final textPainter = TextPainter(
+      textDirection: TextDirection.ltr,
+    );
+    
+    // Сол жактагы отступ (Y белгилери үчүн)
+    final leftPadding = 40.0;
+    // Астындагы отступ (ай аттары үчүн)
+    final bottomPadding = 0.0;
+    // Үстүндөгү отступ
+    final topPadding = 16.0;
+    
+    final chartWidth = size.width - leftPadding;
+    final chartHeight = size.height - bottomPadding - topPadding;
+    
+    // 5 горизонталдык сызык (0, 500, 750, 1000, 1500)
+    for (int i = 0; i < yLabels.length; i++) {
+      final y = topPadding + (chartHeight / (yLabels.length - 1)) * i;
+      
+      // Сызыкты тартуу
+      canvas.drawLine(
+        Offset(leftPadding, y),
+        Offset(size.width, y),
+        paint,
+      );
+      
+      // Y огунун тексттерин тартуу
+      textPainter.text = TextSpan(
+        text: '${yLabels[yLabels.length - 1 - i]}',
+        style: const TextStyle(
+          color: AppColors.grey,
+          fontSize: 10,
+          fontFamily: 'SF Pro Display',
+        ),
+      );
+      textPainter.layout();
+      textPainter.paint(
+        canvas,
+        Offset(leftPadding - textPainter.width - 8, y - textPainter.height / 2),
+      );
+    }
+    
+    // 13 вертикалдык сызык (12 ай + 1 жабуучу сызык)
+    final months = ['Jan','Feb','Mar','Apr','May','Jun',
+                    'Jul','Aug','Sep','Oct','Nov','Dec'];
+    
+    for (int i = 0; i <= months.length; i++) {
+      final x = leftPadding + (chartWidth / months.length) * i;
+      
+      // Акыркы сызык (i == 12) - квадратты жабуучу
+      if (i == months.length) {
+        paint.color = Colors.grey.withValues(alpha: 0.3); // бир аз коюураак
+      } else {
+        paint.color = Colors.grey.withValues(alpha: 0.15);
+      }
+      
+      canvas.drawLine(
+        Offset(x, topPadding),
+        Offset(x, topPadding + chartHeight),
+        paint,
+      );
+    }
+  }
+  
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
