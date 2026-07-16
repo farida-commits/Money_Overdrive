@@ -98,7 +98,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
             const SizedBox(height: 24),
 
-            // Expenditure by month
             const Text(
               'Expenditure by month',
               style: TextStyle(
@@ -109,7 +108,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 letterSpacing: 14 * 0.02,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 1),
             _buildBarChart(monthlyData),
 
             const SizedBox(height: 24),
@@ -267,92 +266,67 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
                   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   
-  // Максималдуу сумманы табуу (графиктин бийиктигин аныктоо үчүн)
-  int maxAmount = 0;
-  for (final amount in monthlyData.values) {
-    if (amount > maxAmount) maxAmount = amount;
-  }
-  // Эгер баары 0 болсо, демейки бийиктик
-  if (maxAmount == 0) maxAmount = 1500;
-  
-  // Y огунун белгилери (туруктуу сандар)
   final yLabels = [0, 500, 750, 1000, 1500];
+  final maxY = 1500.0;
   
   return Container(
-    height: 207,
-    padding: const EdgeInsets.only(top: 8, right: 8),
+    height: 107,
     color: AppColors.background,
-    child: Column(
-      children: [
-        Expanded(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return CustomPaint(
-              painter: _BarChartGridPainter(yLabels: yLabels),
-              child: Padding(
-                // Сол жакта Y белгилери үчүн орун
-                padding: const EdgeInsets.only(left: 40, bottom: 0, top: 16,),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: months.map((month) {
-                    final amount = monthlyData[month] ?? 0;
-                    // Баганчанын бийиктиги (% менен)
-                    final heightFactor = maxAmount > 0 ? amount / maxAmount : 0;
-                    
-                    return Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 5),
-                        child: Tooltip(
+    child: LayoutBuilder(
+      builder: (context, constraints) {
+
+        return CustomPaint(
+          painter: _BarChartGridPainter(yLabels: yLabels),
+          child: Padding(
+            // Сол жакта Y белгилери үчүн орун
+            padding: const EdgeInsets.only(left: 40, bottom: 4,),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: List.generate(months.length, (index) {
+
+                final month = months[index];
+                final amount = monthlyData[month] ?? 0;
+                final chartHeight = constraints.maxHeight  - 20;
+
+                final clampAmount = amount > 1500 ? 1500 : amount;
+                final barHeight = (clampAmount / maxY) * chartHeight;
+                
+                return Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        // Баганча - линиянын так үстүндө
+                        Tooltip(
                           message: amount > 0
-                            ? '$month: \$${_formatAmount(amount)}'
-                            : '$month: \$0',
-                            preferBelow: false,
-                            verticalOffset: 10,
+                              ? '$month: \$${_formatAmount(amount)}'
+                              : '$month: \$0',
+                          preferBelow: false,
+                          verticalOffset: 10,
                           child: Container(
-                            height: (constraints.maxHeight - 16) * heightFactor,
-                            // (MediaQuery.of(context).size.height * 0.12) * heightFactor,
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  AppColors.primary,
-                                  Color(0xFF2A1F8C),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.zero,
-                            ),
+                            width: 16,
+                            height: barHeight > 0 ? barHeight : 0,
+                            decoration: barHeight > 0
+                                ? BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        AppColors.primary,
+                                        AppColors.primary,
+                                      ],
+                                    ),
+                                  )
+                                : null,
                           ),
                         ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-            );
-            },
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(left: 40, top: 8,),
-          child: Row(
-            children: months.map((month) {
-              return Expanded(
-                child: Center(
-                  child: Text(
-                    month,
-                    style: const TextStyle(
-                      fontFamily: 'SF Pro Display',
-                      fontSize: 10,
-                      color: AppColors.grey,
+                      ],
                     ),
-                  ),
-                ),
-              );
-            }).toList(),
+                );
+              }).toList(),
+            ),
           ),
-        ),
-      ],
+        );
+      },
     ),
   );
 }
@@ -371,12 +345,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   );
 }
 
-  // ── Donut chart (Калыбына келтирилди) ───────────────────
   Widget _buildDonutChart(List<MapEntry<String, int>> categoryData) {
     final total = categoryData.fold<int>(0, (s, e) => s + e.value);
 
     return SizedBox(
-      height: 279,
+      height: 299,
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -390,7 +363,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                           color: const Color(0xFF2A2D35),
                           value: 1,
                           title: '',
-                          radius: 40)
+                          radius: 40
+                        ),
                     ]
                   : categoryData.asMap().entries.map((e) {
                       final percent = total > 0
@@ -399,12 +373,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                       return PieChartSectionData(
                         color: _categoryColors[e.key % _categoryColors.length],
                         value: e.value.value.toDouble(),
-                        title: '$percent%',
-                        titleStyle: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
+                        title: '',
+                        
                         radius: 40,
                       );
                     }).toList(),
@@ -432,8 +402,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFF252B35),
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Color(0x33FFFFFF),
+          width: 1.5,
+        )
       ),
       child: Row(
         children: [
@@ -480,10 +454,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     final displayed = _showAll ? categoryData : categoryData.take(4).toList();
 
     return Container(
+      height: 224,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF252B35),
-        borderRadius: BorderRadius.circular(12),
+        color: const Color(0x33FFFFFF),
+        borderRadius: BorderRadius.circular(12),        
       ),
       child: Column(
         children: [
@@ -496,54 +471,80 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   _showAll ? 'Hide' : 'See all',
                   style: const TextStyle(
                     fontFamily: 'SF Pro Display',
-                    fontSize: 14,
-                    color: AppColors.primary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textOnDark,
+                    letterSpacing: 14 * 0.02,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          ...displayed.asMap().entries.map((e) {
-            final percent =
-                total > 0 ? (e.value.value / total * 100).round() : 0;
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Row(
-                children: [
-                  Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: _categoryColors[e.key % _categoryColors.length],
-                      shape: BoxShape.circle,
+          const SizedBox(height: 7),
+
+          Expanded(
+              child: Theme(
+                data: Theme.of(context).copyWith(
+                  scrollbarTheme: ScrollbarThemeData(
+                    thumbColor: WidgetStateProperty.all(AppColors.primary),
+                    thickness: WidgetStateProperty.all(3.0),
+                    radius: const Radius.circular(10),
+                  )
+                ),
+                child: Scrollbar(
+                  thumbVisibility: true,
+                  trackVisibility: false,
+                  interactive: true,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.only(right: 12, bottom: 4,),
+                    child: Column(
+                      children: displayed.asMap().entries.map((e) {
+                        final percent = total > 0
+                          ? (e.value.value / total * 100).round()
+                          : 0;
+                
+                          return  Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 16,
+                                height: 16,
+                                decoration: BoxDecoration(
+                                  color: _categoryColors[e.key % _categoryColors.length],
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              Expanded(
+                                child: Text(
+                                  e.value.key,
+                                  style: const TextStyle(
+                                    fontFamily: 'SF Pro Display',
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w400,
+                                    color: AppColors.textOnDark,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                '$percent%',
+                                style: const TextStyle(
+                                  fontFamily: 'SF Pro Display',
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                  color: AppColors.textOnDark,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),              
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      e.value.key,
-                      style: const TextStyle(
-                        fontFamily: 'SF Pro Display',
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.textOnDark,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    '$percent%',
-                    style: const TextStyle(
-                      fontFamily: 'SF Pro Display',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.textOnDark,
-                    ),
-                  ),
-                ],
+                ),
               ),
-            );
-          }),
+            ),
         ],
       ),
     );
@@ -596,7 +597,7 @@ class _BarChartGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.grey.withValues(alpha: 0.15)
+      ..color = AppColors.white
       ..strokeWidth = 1;
     
     final textPainter = TextPainter(
@@ -606,9 +607,10 @@ class _BarChartGridPainter extends CustomPainter {
     // Сол жактагы отступ (Y белгилери үчүн)
     final leftPadding = 40.0;
     // Астындагы отступ (ай аттары үчүн)
-    final bottomPadding = 0.0;
+    final bottomPadding = 4.0;
     // Үстүндөгү отступ
     final topPadding = 16.0;
+    final verticalLineOverflow = 4.0;
     
     final chartWidth = size.width - leftPadding;
     final chartHeight = size.height - bottomPadding - topPadding;
@@ -619,8 +621,8 @@ class _BarChartGridPainter extends CustomPainter {
       
       // Сызыкты тартуу
       canvas.drawLine(
-        Offset(leftPadding, y),
-        Offset(size.width, y),
+        Offset(leftPadding + 11, y),
+        Offset(size.width - 6, y ),
         paint,
       );
       
@@ -629,34 +631,46 @@ class _BarChartGridPainter extends CustomPainter {
         text: '${yLabels[yLabels.length - 1 - i]}',
         style: const TextStyle(
           color: AppColors.grey,
-          fontSize: 10,
+          fontSize: 9,
           fontFamily: 'SF Pro Display',
         ),
       );
       textPainter.layout();
       textPainter.paint(
         canvas,
-        Offset(leftPadding - textPainter.width - 8, y - textPainter.height / 2),
+        Offset(
+          leftPadding - textPainter.width, 
+          y - textPainter.height / 2,
+        ),
       );
     }
-    
     // 13 вертикалдык сызык (12 ай + 1 жабуучу сызык)
     final months = ['Jan','Feb','Mar','Apr','May','Jun',
                     'Jul','Aug','Sep','Oct','Nov','Dec'];
     
-    for (int i = 0; i <= months.length; i++) {
-      final x = leftPadding + (chartWidth / months.length) * i;
-      
-      // Акыркы сызык (i == 12) - квадратты жабуучу
-      if (i == months.length) {
-        paint.color = Colors.grey.withValues(alpha: 0.3); // бир аз коюураак
-      } else {
-        paint.color = Colors.grey.withValues(alpha: 0.15);
-      }
+    for (int i = 0; i < months.length; i++) {
+      final x = leftPadding + (chartWidth / months.length) * (i + 0.5) ;
+
+      textPainter.text = TextSpan (
+        text: months[i],
+        style: const TextStyle(
+          color: Color(0x99FFFFFF),
+          fontSize: 9,
+          fontFamily: 'SF Pro Display',
+        ),
+      );
+      textPainter.layout();
+      textPainter.paint(
+        canvas,
+      Offset(
+        x - textPainter.width / 2, 
+        topPadding + chartHeight + 14,
+      ),
+    );
       
       canvas.drawLine(
         Offset(x, topPadding),
-        Offset(x, topPadding + chartHeight),
+        Offset(x, topPadding + chartHeight + 6),
         paint,
       );
     }
