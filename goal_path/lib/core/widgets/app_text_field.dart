@@ -3,7 +3,7 @@ import 'package:goal_path/core/theme/app_colors.dart';
 import 'package:goal_path/core/constants/app_sizes.dart';
 import 'package:flutter/services.dart'; // для FilteringTextInputFormatter
 
-class AppTextField extends StatelessWidget {
+class AppTextField extends StatefulWidget {
   final TextEditingController controller;
   final String? hintText;
   final String? prefixText;       // для "$" в поле цены
@@ -28,6 +28,31 @@ class AppTextField extends StatelessWidget {
   });
 
   @override
+  State<AppTextField> createState() => _AppTextFieldState();
+}
+
+class _AppTextFieldState extends State<AppTextField> {
+  late FocusNode _internalFocus;
+  bool _hasFocus = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // ДОБАВИЛИ: фокус ноду — тышкы же ички
+    _internalFocus = widget.focusNode ?? FocusNode();
+    _internalFocus.addListener(() {
+      setState(() => _hasFocus = _internalFocus.hasFocus);
+    });
+  }
+
+  @override
+  void dispose() {
+    // ДОБАВИЛИ: тышкы focusNode берилсе — dispose кылбайбыз
+    if (widget.focusNode == null) _internalFocus.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     // Активный бордер — синий, неактивный — серый (как в Figma)
     final border = OutlineInputBorder(
@@ -47,36 +72,46 @@ class AppTextField extends StatelessWidget {
     );
 
     return TextField(
-      controller: controller,
-      focusNode: focusNode,
-      readOnly: readOnly,
-      onTap: onTap,
+      controller: widget.controller,
+      focusNode: _internalFocus,
+      readOnly: widget.readOnly,
+      onTap: widget.onTap,
       // Многострочное для комментария, иначе одна строка
-      maxLines: isMultiline ? null : 1,
-      minLines: isMultiline ? 3 : 1,
-      keyboardType: isMultiline
+      maxLines: widget.isMultiline ? null : 1,
+      minLines: widget.isMultiline ? 3 : 1,
+      keyboardType: widget.isMultiline
           ? TextInputType.multiline
-          : (keyboardType ?? TextInputType.text),
-      inputFormatters: inputFormatters,
+          : (widget.keyboardType ?? TextInputType.text),
+      inputFormatters: widget.inputFormatters,
       style: const TextStyle(
         fontFamily: 'SF Pro Display',
         fontSize: AppSizes.fontButton,
         color: AppColors.textOnDark,
       ),
       decoration: InputDecoration(
-        hintText: hintText,
-        prefix: prefixText != null ?
-        Text(
-          '\$',
-          style: const TextStyle(
-            fontFamily: 'SF Pro Display',
-            fontSize: AppSizes.fontButton,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 14 * 0.02,
-            color: AppColors.textOnDark,
+        hintText: widget.hintText,
+        prefixIcon: widget.prefixText != null ?
+        Align(
+          widthFactor: 1.0,
+          heightFactor: 1.0,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 16,),
+            child: Text(
+              '\$',
+              style: const TextStyle(
+                fontFamily: 'SF Pro Display',
+                fontSize: AppSizes.fontButton,
+                fontWeight: FontWeight.w500,
+                letterSpacing: 14 * 0.02,
+                color: AppColors.textOnDark,
+              ),
+            ),
           ),
         ) : null,
-        // prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0,),
+        prefixIconConstraints: const BoxConstraints(
+          minWidth: 0, 
+          minHeight: 0,
+        ),
         // prefixStyle: const TextStyle(
         //   fontFamily: 'SF Pro Display',
         //   fontSize: AppSizes.fontButton,

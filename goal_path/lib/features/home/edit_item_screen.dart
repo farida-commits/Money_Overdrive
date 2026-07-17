@@ -489,6 +489,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
         ),
         if (_isCategoryOpen)
           Container(
+            height: 392,
             decoration: BoxDecoration(
               color: AppColors.background,
               borderRadius: const BorderRadius.vertical(
@@ -497,8 +498,8 @@ class _EditItemScreenState extends State<EditItemScreen> {
                   color: AppColors.primary, width: AppSizes.fieldBorderWidth),
             ),
             child: ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
+              // shrinkWrap: true,
+              physics: const AlwaysScrollableScrollPhysics(),
               itemCount: AppStrings.categories.length,
               itemBuilder: (ctx, i) {
                 final cat = AppStrings.categories[i];
@@ -575,14 +576,18 @@ class _EditItemScreenState extends State<EditItemScreen> {
         _buildCheckboxItem(
           label: AppStrings.unpurchased,
           isChecked: _isUnpurchased,
-          checkedColor: const Color(0xFFD33636),
+          checkedColor: _isUnpurchased
+            ? AppColors.primary
+            : const Color(0xFFD33636),
           onTap: () => setState(() => _isUnpurchased = true),
         ),
         const SizedBox(width: AppSizes.fieldHeight),
         _buildCheckboxItem(
           label: AppStrings.purchased,
           isChecked: !_isUnpurchased,
-          checkedColor: const Color(0xFF12B28C),
+          checkedColor: !_isUnpurchased 
+            ? AppColors.primary
+            : const Color(0xFF12B28C),
           onTap: () => setState(() => _isUnpurchased = false),
         ),
       ],
@@ -615,13 +620,14 @@ class _EditItemScreenState extends State<EditItemScreen> {
                 : null,
           ),
           const SizedBox(width: AppSizes.spaceS),
-          Text(label,
-              style: TextStyle(
-                fontFamily: 'SF Pro Display',
-                fontSize: AppSizes.fontButton,
-                fontWeight: FontWeight.w400,
-                color: isChecked ? AppColors.textOnDark : AppColors.grey,
-              )),
+          Text(
+            label,
+            style: TextStyle(
+            fontFamily: 'SF Pro Display',
+            fontSize: AppSizes.fontButton,
+            fontWeight: FontWeight.w400,
+            color: isChecked ? AppColors.textOnDark : AppColors.grey,
+          )),
         ],
       ),
     );

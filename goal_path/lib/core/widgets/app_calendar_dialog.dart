@@ -133,8 +133,8 @@ class _AppCalendarDialogState extends State<AppCalendarDialog> {
                 }
 
                 final date = DateTime(_focusedMonth.year, _focusedMonth.month, idx);
-                final isToday = _same(date, widget.today);
-                final isSelected = _same(date, _selected);
+                final isToday = _same(date, _selected);
+                final isSelected = _same(date, widget.today);
                 final isSelectedNotToday = isSelected && !isToday;
 
                 return Expanded(

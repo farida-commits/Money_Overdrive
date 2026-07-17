@@ -457,6 +457,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
         ),
         if (_isCategoryOpen)
           Container(
+            height: 392,
             decoration: BoxDecoration(
               color: AppColors.background,
               borderRadius: const BorderRadius.vertical(
@@ -465,8 +466,8 @@ class _AddItemScreenState extends State<AddItemScreen> {
                   color: Color(0xffBBBBBB), width: AppSizes.fieldBorderWidth),
             ),
             child: ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
+              // shrinkWrap: true,
+              physics: const AlwaysScrollableScrollPhysics(),
               itemCount: AppStrings.categories.length,
               itemBuilder: (ctx, i) {
                 final cat = AppStrings.categories[i];
