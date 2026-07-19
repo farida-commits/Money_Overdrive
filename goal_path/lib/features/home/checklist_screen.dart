@@ -126,7 +126,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                         Expanded(
                           child: TextField(
                             controller: _searchController,
-                            onTap: () => setState(() => _isSearchiing = true),
+                            onTap: purchases.isEmpty ? null : () => setState(() => _isSearchiing = true),
                             onChanged: (value) => setState(() {}),
                             style: const TextStyle(
                               color: AppColors.textOnDark,
@@ -163,9 +163,9 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                 ),
                 if (!_isSearchiing) ...[
                   const SizedBox(width: 8),
-                _iconButton('assets/icons/ic_filter.svg'),
+                _iconButton('assets/icons/ic_filter.svg', purchases),
                 const SizedBox(width: 8),
-                _iconButton('assets/icons/ic_sort.svg'),
+                _iconButton('assets/icons/ic_sort.svg', purchases),
               ],
               if (_isSearchiing)
                 TextButton(
@@ -247,12 +247,15 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
     );
   }
   // исправлен параметр String вместо IconData
-  Widget _iconButton(String iconPath) {
+  Widget _iconButton(String iconPath, List purchases) {
+    final purchases = context.read<PurchasesProvider>().purchases;
     final isFilter = iconPath.contains('filter');
     final hasActive = isFilter ? _hasActiveFilter : _hasActiveSort;
 
     return GestureDetector(
-      onTap: () => isFilter ? _showFilterSheet() : _showSortSheet(),
+      onTap: purchases.isEmpty
+        ? null
+        : () => isFilter ? _showFilterSheet() : _showSortSheet(),
       child: Stack(
         children: [
         Container(

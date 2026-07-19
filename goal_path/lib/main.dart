@@ -60,8 +60,14 @@ class _SplashGateState extends State<_SplashGate> {
     super.initState();
     Future.delayed(const Duration(milliseconds: 1500), () {
       if (!mounted) return;
+        final settingsBox = Hive.box('settings');
+        final onboardingShown = settingsBox.get('onboarding_shown', defaultValue: false);
+
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+        MaterialPageRoute(builder: (_) => onboardingShown
+          ? const HomeScreen()
+          : const OnboardingScreen(),
+        ),
       );
     });
   }
