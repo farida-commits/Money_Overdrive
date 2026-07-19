@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
+import 'features/home/home_screen.dart';
 import 'features/splash/splash_screen.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'features/onboarding/onboarding_screen.dart';
@@ -11,7 +12,8 @@ void main() async{
 
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
-  await Hive.openBox('purchases');  
+  await Hive.openBox('purchases'); 
+  await Hive.openBox('settings'); 
 
   runApp(
     ChangeNotifierProvider(

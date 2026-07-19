@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 // import 'package:goal_path/features/home/checklist_screen.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'onboarding_page.dart';
 import 'rate_app_dialog.dart';
 import '../home/home_screen.dart';
@@ -30,8 +31,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   void initState() {
     super.initState();
-    super.initState();
-    _showRateIfNeeded();
+    final settingBox = Hive.box('settings');
+    settingBox.put('onboarding_shown', true);
   }
 
   void _goToNextPage() {
@@ -48,12 +49,29 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
+  void _showRateDialog() async {
+    final settingsBox = Hive.box('settings');
+    final rateShown = settingsBox.get('rate_shown', defaultValue: false);
+
+    if (!rateShown && !_dialogShown) {
+      setState(() => _dialogShown = true);
+      settingsBox.put('rate_shown', true);
+
+      await RateAppDialog.show(context);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: PageView(
         controller: _controller,
-        onPageChanged: (index) => setState(() => _currentPage = index),
+        onPageChanged: (index) {
+          setState(() => _currentPage = index);
+          if (index == 3) {
+            _showRateDialog();
+          }
+        },
         children: [
           OnboardingPage(
             surfaceColor: _dialogShown
