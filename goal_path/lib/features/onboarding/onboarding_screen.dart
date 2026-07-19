@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'onboarding_page.dart';
 import 'rate_app_dialog.dart';
 import '../home/home_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -10,6 +11,16 @@ class OnboardingScreen extends StatefulWidget {
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
+  Future<void> _showRateIfNeeded() async {
+  final prefs = await SharedPreferences.getInstance();
+  final shown = prefs.getBool('rate_shown') ?? false;
+  if (!shown) {
+    await prefs.setBool('rate_shown', true);
+    // rate dialog көрсөт
+    RateAppDialog();
+  }
+}
+
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _controller = PageController();
@@ -19,11 +30,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await RateAppDialog.show(context);
-      if (!mounted) return;
-      setState(() => _dialogShown = true);
-    });
+    super.initState();
+    _showRateIfNeeded();
   }
 
   void _goToNextPage() {
