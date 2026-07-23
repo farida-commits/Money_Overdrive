@@ -289,7 +289,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
           centerTitle: true,
           leading: IconButton(
             icon: const Icon(
-              Icons.arrow_back_ios,
+              Icons.arrow_back_rounded,
               color: AppColors.textOnDark, 
               size: AppSizes.iconM,
             ),

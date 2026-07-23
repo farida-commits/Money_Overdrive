@@ -31,28 +31,6 @@ class _HomeScreenState extends State<HomeScreen> {
             currentIdex = value;
           });
         },
-        // backgroundColor: const Color(0xFF1A1F27), // конкреттүү түс бер
-        // selectedItemColor: Colors.white,
-        // unselectedItemColor: Colors.grey,
-        // type: BottomNavigationBarType.fixed,
-        // items: [
-        //   BottomNavigationBarItem(
-        //     icon: Icon(Icons.checklist_rounded),
-        //     label: 'Cheklist',
-        //   ),
-        //   BottomNavigationBarItem(
-        //     icon: Icon(Icons.track_changes),
-        //     label: 'Goals',
-        //   ),
-        //   BottomNavigationBarItem(
-        //     icon:  Icon(Icons.bar_chart),
-        //     label: 'Analytics',
-        //   ),
-        //   BottomNavigationBarItem(
-        //     icon: Icon(Icons.settings ),
-        //     label: 'Settings',
-        //   ),
-        // ],
       ),
     );
   }

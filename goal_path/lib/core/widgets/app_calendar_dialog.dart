@@ -3,10 +3,6 @@ import 'package:intl/intl.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/theme/app_colors.dart';
 // ─────────────────────────────────────────────
-// Диалог календаря — появляется по центру экрана
-// Фон чуть светлее: 0xFF3A3D45
-// Внизу: разделитель + Done
-// ─────────────────────────────────────────────
 class AppCalendarDialog extends StatefulWidget {
   final DateTime initialDate;
   final DateTime today;

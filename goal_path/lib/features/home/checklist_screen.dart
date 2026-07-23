@@ -126,6 +126,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                         Expanded(
                           child: TextField(
                             controller: _searchController,
+                            enabled: purchases.isNotEmpty,
                             onTap: purchases.isEmpty ? null : () => setState(() => _isSearchiing = true),
                             onChanged: (value) => setState(() {}),
                             style: const TextStyle(
@@ -151,7 +152,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                           child: const Padding(
                             padding: EdgeInsetsGeometry.only(right: 8),
                             child: Icon(
-                              Icons.cancel,
+                              CupertinoIcons.clear_circled, 
                               color: AppColors.grey,
                               size: 18,
                             ),
@@ -493,11 +494,13 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                 children: [
                   GestureDetector(
                     onTap: () {
-                      setModalState(() {
-                        tempCategory = null;
-                        tempUnpurchased = false;
-                        tempPurchased = false;
+                      setState(() {
+                        _selectedFilterCategory = null;
+                        _filterPurchased = null;
+                        _filterUnpurchased = null;
+                        _hasActiveFilter = false;
                       });
+                      Navigator.pop(context);
                     },
                     child: const Text(
                       'Reset',
@@ -695,7 +698,13 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                       )),
                 ),
                 GestureDetector(
-                  onTap: () => Navigator.pop(ctx),
+                  onTap: () {
+                    setState(() {
+                      _selectedSort = '';
+                      _hasActiveSort = false;
+                    });
+                    Navigator.pop(context);
+                  },
                   child: const Icon(
                     CupertinoIcons.clear_circled, 
                     color: AppColors.grey,

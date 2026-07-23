@@ -340,7 +340,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
       backgroundColor: AppColors.background,
       centerTitle: true,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios,
+        icon: const Icon(Icons.arrow_back_rounded,
             color: AppColors.textOnDark, size: AppSizes.iconM),
         onPressed: () => Navigator.pop(context),
       ),

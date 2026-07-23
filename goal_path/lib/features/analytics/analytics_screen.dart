@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:goal_path/core/constants/app_sizes.dart';
+import 'package:goal_path/core/constants/app_strings.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'package:goal_path/core/theme/app_colors.dart';
@@ -265,9 +266,22 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   Widget _buildBarChart(Map<String, int> monthlyData) {
     final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
                   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  int maxAmount = 0;
+  for (final amount in monthlyData.values) {
+    if (amount > maxAmount) maxAmount = amount;
+  }
+  if (maxAmount == 0) maxAmount = 100;
+    final maxY = ((maxAmount / 1000).ceil() * 1000).toDouble();
+    final step = (maxY / 4).round();
+    final yLabels = [
+      0,
+      step,
+      step * 2,
+      step * 3,
+      step * 4 > maxY ? maxY.toInt() : step * 4,
+    ];
   
-  final yLabels = [0, 500, 750, 1000, 1500];
-  final maxY = 1500.0;
   
   return Container(
     height: 107,
@@ -286,10 +300,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
                 final month = months[index];
                 final amount = monthlyData[month] ?? 0;
-                final chartHeight = constraints.maxHeight  - 20;
-
-                final clampAmount = amount > 1500 ? 1500 : amount;
-                final barHeight = (clampAmount / maxY) * chartHeight;
+                final chartHeight = constraints.maxHeight - 20;
+                final clampedAmount = amount > maxY ? maxY : amount.toDouble();
+                final barHeight = (clampedAmount / maxY) * chartHeight;
                 
                 return Expanded(
                   child: Column(
@@ -451,10 +464,22 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   // ── Категория тизмеси ─────────────────────
   Widget _buildCategoryList(List<MapEntry<String, int>> categoryData) {
     final total = categoryData.fold<int>(0, (s, e) => s + e.value);
-    final displayed = _showAll ? categoryData : categoryData.take(4).toList();
+
+    final allCategories = AppStrings.categories.map((cat) {
+      final found = categoryData.firstWhere(
+        (e) => e.key == cat,
+        orElse: () => MapEntry(cat, 0),
+      );
+      return found;
+    }).toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    final displayed = _showAll
+        ? allCategories
+        : allCategories.take(4).toList();
 
     return Container(
-      height: 224,
+      height: _showAll ? 224.0 : 202.0,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0x33FFFFFF),
@@ -482,11 +507,13 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           ),
           const SizedBox(height: 7),
 
-          Expanded(
+          _showAll
+            ?  Expanded(
               child: Theme(
                 data: Theme.of(context).copyWith(
                   scrollbarTheme: ScrollbarThemeData(
                     thumbColor: WidgetStateProperty.all(AppColors.primary),
+                    trackColor: WidgetStateProperty.all(const Color(0xFFE8ECF0)),
                     thickness: WidgetStateProperty.all(3.0),
                     radius: const Radius.circular(10),
                   )
@@ -544,7 +571,50 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   ),
                 ),
               ),
-            ),
+            )
+            : Column(
+              children: displayed.asMap().entries.map((e) {
+                final percent = total > 0
+                    ? (e.value.value / total * 100).round()
+                    : 0;
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 16,
+                        height: 16,
+                        decoration: BoxDecoration(
+                          color: _categoryColors[e.key % _categoryColors.length],
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: Text(
+                          e.value.key,
+                          style: const TextStyle(
+                            fontFamily: 'SF Pro Display',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.textOnDark,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '$percent%',
+                        style: const TextStyle(
+                          fontFamily: 'SF Pro Display',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.textOnDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            )
         ],
       ),
     );

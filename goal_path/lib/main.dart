@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
+import 'package:goal_path/core/models/goal_model.dart';
 import 'features/home/home_screen.dart';
 import 'features/splash/splash_screen.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -12,8 +13,11 @@ void main() async{
 
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
+  Hive.registerAdapter(GoalModelAdapter());
+
   await Hive.openBox('purchases'); 
   await Hive.openBox('settings'); 
+  await Hive.openBox<GoalModel>('goals_box');
 
   runApp(
     ChangeNotifierProvider(
